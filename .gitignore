@@ -1,0 +1,9 @@
+# 私有部署配置（含服务器信息，只留本机，不进公开仓库）
+abc-phonics/deploy/
+
+# 语音缓存（可由 build.py 重新生成）
+abc-phonics/audio_cache/
+
+__pycache__/
+*.pyc
+.DS_Store
