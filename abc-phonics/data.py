@@ -82,7 +82,7 @@ LETTERS = [
          "words": [["key", "🔑"], ["king", "👑"], ["kite", "🪁"], ["kid", "🧒"]]},
     ]},
     {"letter": "L", "sounds": [
-        {"ipa": "/l/", "label": "舌尖顶上颚拉长", "demo": "la",
+        {"ipa": "/l/", "label": "舌尖顶上颚拉长", "demo": "rec:kokoro-l",
          "words": [["lion", "🦁"], ["leg", "🦵"], ["lamp", "💡"], ["lemon", "🍋"]]},
     ]},
     {"letter": "M", "sounds": [
