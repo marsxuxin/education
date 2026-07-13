@@ -12,8 +12,11 @@ demo 示范音字典（2026-07-13 v4 定稿：真人录音为主）：
 - "rec:文件名" = abc-phonics/recordings/ 下的真人发音录音（美国教师录制，
   来源 Sound City Reading，免费教育用途授权，见 recordings/CREDITS.md）。
   build.py 只做去首尾静音 + 音量归一，不动声音内容本身。
-- 合成例外（5 个）：ar / or / er（SCR 无单独文件）+ lll / rrr（SCR 的 L/R 是
-  "ull/err" 教法、带元音头，老板耳测不合格；合成持续音经三重鉴定无元音头）
+- 合成纯音（11 个，学而思式"清亮/卷舌"风格，均经三重鉴定无元音头）：
+  持续辅音 lll rrr mmm nnn vvv fff zzzz + kwah + 卷舌 ar or er
+  ——SCR 对这些音用 "ull/err/əm/kwoo" 式教法（带元音），老板耳测统一否决；
+  辨音双胞胎游戏的配对(m/n、f/v、b/d、b/p)保持同声源，避免孩子按音色答题
+- 真人录音保留：全部元音/塞音(b p d t k g)/咝音(s sh ch th×2 x h w y j)/ng
 - 结构校验：tools/analyze_recordings.py 证明每条录音都是单段纯音、不夹单词；
   机器听写复核：tools/qa_gate.py（faster-whisper large + allosaurus 双引擎）
 - 若家长反馈某音不准: 换 recordings/ 里的文件或改 demo 字段, 重跑 build.py
@@ -49,7 +52,7 @@ LETTERS = [
          "words": [["he", "👦"], ["she", "👧"], ["we", "👨‍👩‍👧"], ["me", "🙋"]]},
     ]},
     {"letter": "F", "sounds": [
-        {"ipa": "/f/", "label": "它的声音", "demo": "rec:alphasounds-f",
+        {"ipa": "/f/", "label": "上齿咬下唇吹气", "demo": "fff",
          "words": [["fish", "🐟"], ["five", "5️⃣"], ["fox", "🦊"], ["foot", "🦶"]]},
     ]},
     {"letter": "G", "sounds": [
@@ -81,11 +84,11 @@ LETTERS = [
          "words": [["lion", "🦁"], ["leg", "🦵"], ["lamp", "💡"], ["lemon", "🍋"]]},
     ]},
     {"letter": "M", "sounds": [
-        {"ipa": "/m/", "label": "闭上嘴巴哼", "demo": "rec:alphasounds-m",
+        {"ipa": "/m/", "label": "闭上嘴巴哼", "demo": "mmm",
          "words": [["mom", "👩"], ["milk", "🥛"], ["mouse", "🐭"], ["map", "🗺️"]]},
     ]},
     {"letter": "N", "sounds": [
-        {"ipa": "/n/", "label": "舌头顶上颚", "demo": "rec:alphasounds-n",
+        {"ipa": "/n/", "label": "舌头顶上颚", "demo": "nnn",
          "words": [["nose", "👃"], ["nut", "🥜"], ["nine", "9️⃣"], ["night", "🌙"]]},
     ]},
     {"letter": "O", "sounds": [
@@ -101,7 +104,7 @@ LETTERS = [
          "words": [["pig", "🐷"], ["pen", "🖊️"], ["panda", "🐼"], ["pink", "🌸"]]},
     ]},
     {"letter": "Q", "sounds": [
-        {"ipa": "/kw/", "label": "qu 在一起", "demo": "rec:alphasounds-q",
+        {"ipa": "/kw/", "label": "qu 在一起", "demo": "kwah",
          "words": [["queen", "👸"], ["question", "❓"], ["quiet", "🤫"], ["quick", "🏃"]]},
     ]},
     {"letter": "R", "sounds": [
@@ -111,7 +114,7 @@ LETTERS = [
     {"letter": "S", "sounds": [
         {"ipa": "/s/", "label": "常用发音", "demo": "rec:alphasounds-s",
          "words": [["sun", "☀️"], ["six", "6️⃣"], ["star", "⭐"], ["sit", "🪑"]]},
-        {"ipa": "/z/", "label": "有时读 z", "demo": "rec:alphasounds-z", "advanced": True,
+        {"ipa": "/z/", "label": "有时读 z", "demo": "zzzz", "advanced": True,
          "words": [["is", "☑️"], ["his", "👦"], ["nose", "👃"]]},
     ]},
     {"letter": "T", "sounds": [
@@ -125,7 +128,7 @@ LETTERS = [
          "words": [["cute", "🥰"], ["music", "🎵"], ["unicorn", "🦄"], ["cube", "🧊"]]},
     ]},
     {"letter": "V", "sounds": [
-        {"ipa": "/v/", "label": "咬住下嘴唇", "demo": "rec:alphasounds-v",
+        {"ipa": "/v/", "label": "咬住下嘴唇", "demo": "vvv",
          "words": [["van", "🚐"], ["vest", "🦺"], ["violin", "🎻"], ["vegetable", "🥦"]]},
     ]},
     {"letter": "W", "sounds": [
@@ -145,7 +148,7 @@ LETTERS = [
          "words": [["baby", "👶"], ["happy", "😄"], ["candy", "🍬"], ["family", "👪"]]},
     ]},
     {"letter": "Z", "sounds": [
-        {"ipa": "/z/", "label": "它的声音", "demo": "rec:alphasounds-z",
+        {"ipa": "/z/", "label": "它的声音", "demo": "zzzz",
          "words": [["zoo", "🦁"], ["zebra", "🦓"], ["zip", "🤐"], ["zero", "0️⃣"]]},
     ]},
 ]
