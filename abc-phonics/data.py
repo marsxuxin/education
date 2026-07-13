@@ -52,7 +52,7 @@ LETTERS = [
          "words": [["he", "👦"], ["she", "👧"], ["we", "👨‍👩‍👧"], ["me", "🙋"]]},
     ]},
     {"letter": "F", "sounds": [
-        {"ipa": "/f/", "label": "上齿咬下唇吹气", "demo": "fff",
+        {"ipa": "/f/", "label": "上齿咬下唇吹气", "demo": "rec:alphasounds-f",
          "words": [["fish", "🐟"], ["five", "5️⃣"], ["fox", "🦊"], ["foot", "🦶"]]},
     ]},
     {"letter": "G", "sounds": [
@@ -80,15 +80,15 @@ LETTERS = [
          "words": [["key", "🔑"], ["king", "👑"], ["kite", "🪁"], ["kid", "🧒"]]},
     ]},
     {"letter": "L", "sounds": [
-        {"ipa": "/l/", "label": "舌尖顶上颚拉长", "demo": "lll",
+        {"ipa": "/l/", "label": "舌尖顶上颚拉长", "demo": "rec:alphasounds-l",
          "words": [["lion", "🦁"], ["leg", "🦵"], ["lamp", "💡"], ["lemon", "🍋"]]},
     ]},
     {"letter": "M", "sounds": [
-        {"ipa": "/m/", "label": "闭上嘴巴哼", "demo": "mmm",
+        {"ipa": "/m/", "label": "闭上嘴巴哼", "demo": "rec:alphasounds-m",
          "words": [["mom", "👩"], ["milk", "🥛"], ["mouse", "🐭"], ["map", "🗺️"]]},
     ]},
     {"letter": "N", "sounds": [
-        {"ipa": "/n/", "label": "舌头顶上颚", "demo": "nnn",
+        {"ipa": "/n/", "label": "舌头顶上颚", "demo": "rec:alphasounds-n",
          "words": [["nose", "👃"], ["nut", "🥜"], ["nine", "9️⃣"], ["night", "🌙"]]},
     ]},
     {"letter": "O", "sounds": [
@@ -108,13 +108,13 @@ LETTERS = [
          "words": [["queen", "👸"], ["question", "❓"], ["quiet", "🤫"], ["quick", "🏃"]]},
     ]},
     {"letter": "R", "sounds": [
-        {"ipa": "/r/", "label": "卷起舌头轻轻吼", "demo": "rrr",
+        {"ipa": "/r/", "label": "卷起舌头轻轻吼", "demo": "rec:alphasounds-r",
          "words": [["rabbit", "🐰"], ["red", "🔴"], ["run", "🏃"], ["rice", "🍚"]]},
     ]},
     {"letter": "S", "sounds": [
         {"ipa": "/s/", "label": "常用发音", "demo": "rec:alphasounds-s",
          "words": [["sun", "☀️"], ["six", "6️⃣"], ["star", "⭐"], ["sit", "🪑"]]},
-        {"ipa": "/z/", "label": "有时读 z", "demo": "zzzz", "advanced": True,
+        {"ipa": "/z/", "label": "有时读 z", "demo": "rec:alphasounds-z", "advanced": True,
          "words": [["is", "☑️"], ["his", "👦"], ["nose", "👃"]]},
     ]},
     {"letter": "T", "sounds": [
@@ -128,7 +128,7 @@ LETTERS = [
          "words": [["cute", "🥰"], ["music", "🎵"], ["unicorn", "🦄"], ["cube", "🧊"]]},
     ]},
     {"letter": "V", "sounds": [
-        {"ipa": "/v/", "label": "咬住下嘴唇", "demo": "vvv",
+        {"ipa": "/v/", "label": "咬住下嘴唇", "demo": "rec:alphasounds-v",
          "words": [["van", "🚐"], ["vest", "🦺"], ["violin", "🎻"], ["vegetable", "🥦"]]},
     ]},
     {"letter": "W", "sounds": [
@@ -148,7 +148,7 @@ LETTERS = [
          "words": [["baby", "👶"], ["happy", "😄"], ["candy", "🍬"], ["family", "👪"]]},
     ]},
     {"letter": "Z", "sounds": [
-        {"ipa": "/z/", "label": "它的声音", "demo": "zzzz",
+        {"ipa": "/z/", "label": "它的声音", "demo": "rec:alphasounds-z",
          "words": [["zoo", "🦁"], ["zebra", "🦓"], ["zip", "🤐"], ["zero", "0️⃣"]]},
     ]},
 ]
