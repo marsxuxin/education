@@ -11,8 +11,10 @@
 
 ## 其他来源
 
-- `kokoro-r.wav`：Kokoro-82M 开源神经语音模型（Apache-2.0）以音标 ɹːə 直接合成的
-  美式卷舌 r 示范。
+- `custom-l.wav` / `custom-r.wav`：定制示范发音（项目维护者亲自示范并终审），
+  经 OpenVoice V2（MIT 许可）音色转换与本库教师声线统一。
+- `kokoro-l.wav` / `kokoro-r.wav`：Kokoro-82M 开源神经语音模型（Apache-2.0）
+  以音标直接合成的历史版本（已被 custom 版替代，留档）。
 - `scrtrim-n.wav` / `scrtrim-v.wav`：由上述 Sound City Reading 的 n / v 录音
   经测量级修剪（去除起始元音段，见 tools/trim_scr_n.py）得到的纯持续音，
   授权同 Sound City Reading 条款。

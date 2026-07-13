@@ -82,7 +82,7 @@ LETTERS = [
          "words": [["key", "🔑"], ["king", "👑"], ["kite", "🪁"], ["kid", "🧒"]]},
     ]},
     {"letter": "L", "sounds": [
-        {"ipa": "/l/", "label": "舌尖顶上颚拉长", "demo": "rec:kokoro-l",
+        {"ipa": "/l/", "label": "舌尖顶上颚拉长", "demo": "rec:custom-l",
          "words": [["lion", "🦁"], ["leg", "🦵"], ["lamp", "💡"], ["lemon", "🍋"]]},
     ]},
     {"letter": "M", "sounds": [
@@ -110,7 +110,7 @@ LETTERS = [
          "words": [["queen", "👸"], ["question", "❓"], ["quiet", "🤫"], ["quick", "🏃"]]},
     ]},
     {"letter": "R", "sounds": [
-        {"ipa": "/r/", "label": "卷起舌头轻轻吼", "demo": "rec:kokoro-r",
+        {"ipa": "/r/", "label": "卷起舌头轻轻吼", "demo": "rec:custom-r",
          "words": [["rabbit", "🐰"], ["red", "🔴"], ["run", "🏃"], ["rice", "🍚"]]},
     ]},
     {"letter": "S", "sounds": [
