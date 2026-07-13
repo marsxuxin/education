@@ -12,7 +12,8 @@ demo 示范音字典（2026-07-13 v4 定稿：真人录音为主）：
 - "rec:文件名" = abc-phonics/recordings/ 下的真人发音录音（美国教师录制，
   来源 Sound City Reading，免费教育用途授权，见 recordings/CREDITS.md）。
   build.py 只做去首尾静音 + 音量归一，不动声音内容本身。
-- 仅 ar / or / er 三个卷舌音暂用 TTS 真词合成（SCR 无单独文件）：ar or er
+- 合成例外（5 个）：ar / or / er（SCR 无单独文件）+ lll / rrr（SCR 的 L/R 是
+  "ull/err" 教法、带元音头，老板耳测不合格；合成持续音经三重鉴定无元音头）
 - 结构校验：tools/analyze_recordings.py 证明每条录音都是单段纯音、不夹单词；
   机器听写复核：tools/qa_gate.py（faster-whisper large + allosaurus 双引擎）
 - 若家长反馈某音不准: 换 recordings/ 里的文件或改 demo 字段, 重跑 build.py
@@ -76,7 +77,7 @@ LETTERS = [
          "words": [["key", "🔑"], ["king", "👑"], ["kite", "🪁"], ["kid", "🧒"]]},
     ]},
     {"letter": "L", "sounds": [
-        {"ipa": "/l/", "label": "它的声音", "demo": "rec:alphasounds-l",
+        {"ipa": "/l/", "label": "舌尖顶上颚拉长", "demo": "lll",
          "words": [["lion", "🦁"], ["leg", "🦵"], ["lamp", "💡"], ["lemon", "🍋"]]},
     ]},
     {"letter": "M", "sounds": [
@@ -104,7 +105,7 @@ LETTERS = [
          "words": [["queen", "👸"], ["question", "❓"], ["quiet", "🤫"], ["quick", "🏃"]]},
     ]},
     {"letter": "R", "sounds": [
-        {"ipa": "/r/", "label": "它的声音", "demo": "rec:alphasounds-r",
+        {"ipa": "/r/", "label": "卷起舌头轻轻吼", "demo": "rrr",
          "words": [["rabbit", "🐰"], ["red", "🔴"], ["run", "🏃"], ["rice", "🍚"]]},
     ]},
     {"letter": "S", "sounds": [
