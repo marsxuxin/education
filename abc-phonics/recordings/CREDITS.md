@@ -9,6 +9,14 @@
 - 本项目为免费教育用途，符合上述授权；如未来涉及任何商业化，
   须先联系作者取得书面许可。
 
+## 其他来源
+
+- `kokoro-r.wav`：Kokoro-82M 开源神经语音模型（Apache-2.0）以音标 ɹːə 直接合成的
+  美式卷舌 r 示范。
+- `scrtrim-n.wav` / `scrtrim-v.wav`：由上述 Sound City Reading 的 n / v 录音
+  经测量级修剪（去除起始元音段，见 tools/trim_scr_n.py）得到的纯持续音，
+  授权同 Sound City Reading 条款。
+
 ## 结构与质量校验
 
 - `tools/analyze_recordings.py`：信号分析证明每条录音为单段纯音（不含示例单词）；

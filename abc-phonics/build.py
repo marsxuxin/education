@@ -90,6 +90,8 @@ def make_clip(spec):
     if text.startswith("rec:"):
         src = os.path.join(REC, text[4:] + ".mp3")
         if not os.path.exists(src):
+            src = os.path.join(REC, text[4:] + ".wav")
+        if not os.path.exists(src):
             raise RuntimeError(f"缺少录音文件: {src}")
         sig = hashlib.md5(open(src, "rb").read()).hexdigest()[:12]
         h = hashlib.md5(f"v4b|rec|{sig}".encode()).hexdigest()

@@ -12,11 +12,13 @@ demo 示范音字典（2026-07-13 v4 定稿：真人录音为主）：
 - "rec:文件名" = abc-phonics/recordings/ 下的真人发音录音（美国教师录制，
   来源 Sound City Reading，免费教育用途授权，见 recordings/CREDITS.md）。
   build.py 只做去首尾静音 + 音量归一，不动声音内容本身。
-- 合成纯音（11 个，学而思式"清亮/卷舌"风格，均经三重鉴定无元音头）：
-  持续辅音 lll rrr mmm nnn vvv fff zzzz + kwah + 卷舌 ar or er
-  ——SCR 对这些音用 "ull/err/əm/kwoo" 式教法（带元音），老板耳测统一否决；
-  辨音双胞胎游戏的配对(m/n、f/v、b/d、b/p)保持同声源，避免孩子按音色答题
-- 真人录音保留：全部元音/塞音(b p d t k g)/咝音(s sh ch th×2 x h w y j)/ng
+- 疑难四音终案（2026-07-13 v5，判读标准=辅音在前+接近该字母在单词里的发音）：
+  L="la"(Samantha, 听写"law") / R="rec:kokoro-r"(神经语音音标直出 ɹːə, 听写"Ruh")
+  N="rec:scrtrim-n"(SCR真人精修, 听写"Hmm"纯哼鸣, 与 M 同声源)
+  V="rec:scrtrim-v"(SCR真人精修, 与 F 同声源)
+- 其余合成：kwah + 卷舌 ar or er；辨音配对(m/n、f/v、b/d、b/p)保持同声源
+- 教训存档：TTS 念重复字母串=字母名；神经TTS发不了孤立辅音(会脑补元音)；
+  espeak 只能出几十毫秒嘀嗒——持续辅音要么真人、要么"辅音+轻尾音"结构
 - 结构校验：tools/analyze_recordings.py 证明每条录音都是单段纯音、不夹单词；
   机器听写复核：tools/qa_gate.py（faster-whisper large + allosaurus 双引擎）
 - 若家长反馈某音不准: 换 recordings/ 里的文件或改 demo 字段, 重跑 build.py
@@ -80,7 +82,7 @@ LETTERS = [
          "words": [["key", "🔑"], ["king", "👑"], ["kite", "🪁"], ["kid", "🧒"]]},
     ]},
     {"letter": "L", "sounds": [
-        {"ipa": "/l/", "label": "舌尖顶上颚拉长", "demo": "rec:alphasounds-l",
+        {"ipa": "/l/", "label": "舌尖顶上颚拉长", "demo": "la",
          "words": [["lion", "🦁"], ["leg", "🦵"], ["lamp", "💡"], ["lemon", "🍋"]]},
     ]},
     {"letter": "M", "sounds": [
@@ -88,7 +90,7 @@ LETTERS = [
          "words": [["mom", "👩"], ["milk", "🥛"], ["mouse", "🐭"], ["map", "🗺️"]]},
     ]},
     {"letter": "N", "sounds": [
-        {"ipa": "/n/", "label": "舌头顶上颚", "demo": "rec:alphasounds-n",
+        {"ipa": "/n/", "label": "舌头顶上颚", "demo": "rec:scrtrim-n",
          "words": [["nose", "👃"], ["nut", "🥜"], ["nine", "9️⃣"], ["night", "🌙"]]},
     ]},
     {"letter": "O", "sounds": [
@@ -108,7 +110,7 @@ LETTERS = [
          "words": [["queen", "👸"], ["question", "❓"], ["quiet", "🤫"], ["quick", "🏃"]]},
     ]},
     {"letter": "R", "sounds": [
-        {"ipa": "/r/", "label": "卷起舌头轻轻吼", "demo": "rec:alphasounds-r",
+        {"ipa": "/r/", "label": "卷起舌头轻轻吼", "demo": "rec:kokoro-r",
          "words": [["rabbit", "🐰"], ["red", "🔴"], ["run", "🏃"], ["rice", "🍚"]]},
     ]},
     {"letter": "S", "sounds": [
@@ -128,7 +130,7 @@ LETTERS = [
          "words": [["cute", "🥰"], ["music", "🎵"], ["unicorn", "🦄"], ["cube", "🧊"]]},
     ]},
     {"letter": "V", "sounds": [
-        {"ipa": "/v/", "label": "咬住下嘴唇", "demo": "rec:alphasounds-v",
+        {"ipa": "/v/", "label": "咬住下嘴唇", "demo": "rec:scrtrim-v",
          "words": [["van", "🚐"], ["vest", "🦺"], ["violin", "🎻"], ["vegetable", "🥦"]]},
     ]},
     {"letter": "W", "sounds": [
