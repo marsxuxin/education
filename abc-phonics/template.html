@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#8ecdf7">
+<meta name="robots" content="noindex, nofollow">
 <title>ABC 发音乐园</title>
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" font-size="80">🔤</text></svg>'>
 <style>
@@ -335,12 +336,9 @@ function startGame(mode) {
   const qa = questionAudio();
   playSeq(['z:intro_' + mode].concat(qa));
 }
-/* 单音示范重复次数：剪辑出的爆破音很短(cut:开头)，多放一次更容易听清 */
+/* 单音示范统一放两遍，中间留出模仿的间隙 */
 function demoKeys(demo) {
-  const n = demo.indexOf('cut:') === 0 ? 3 : 2;
-  const keys = [];
-  for (let i = 0; i < n; i++) keys.push('d:' + demo);
-  return keys;
+  return ['d:' + demo, 'd:' + demo];
 }
 function questionAudio() {
   if (G.mode === 'g2') return demoKeys(G.q.demo);

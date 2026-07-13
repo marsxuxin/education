@@ -5,11 +5,10 @@
 流程：
 1. 从 data.py 收集所有需要的音频（字母名/单音示范/单词常速+慢速/中文语音）
 2. 普通条目：say 合成 -> afconvert 压成 mono 32kbps AAC(m4a)，带缓存
-   剪辑条目（demo 形如 "cut:ustop:cat"）：合成整个单词后做"音头手术"——
-   用能量+过零率找到元音起点，把起点之前的辅音音头剪出来，
-   得到不带元音的纯辅音示范（k! s~ d! …），解决 TTS 念拟声词必带元音的问题
+   真人录音条目（demo 形如 "rec:文件名"）：取 recordings/文件名.mp3，
+   只做「去首尾静音 + 峰值音量归一」，不对声音内容本身做任何加工
 3. 全部 base64 内嵌进 template.html，输出 dist/index.html（单文件、可离线）
-4. 打印体检表：拟声词看时长；剪辑音看剪出长度是否落在该类辅音的合理区间
+4. 打印体检表：真人录音显示有效音长度；合成音显示时长（过长=可疑拼读）
 """
 import base64
 import hashlib
@@ -26,37 +25,15 @@ from data import LETTERS, COMBOS, CONFUSION_PAIRS, ZH_CLIPS, STICKERS
 ROOT = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(ROOT, "audio_cache")
 DIST = os.path.join(ROOT, "dist")
+REC = os.path.join(ROOT, "recordings")
 VOICE_EN = "Samantha"
 VOICE_ZH = "Tingting"
 SLOW_RATE = 105
 SR = 22050
 
-# 剪辑类别 -> (剪出长度合理区间 ms, 结束点相对元音起点的偏移 ms, 尾部淡出 ms)
-CUT_KINDS = {
-    "ustop": ((30, 200),  -2, 12),   # 清塞音 k p t：留爆破+送气，元音前 2ms 截断
-    "vstop": ((25, 140),  25, 15),   # 浊塞音 b d g：爆破很短，带 25ms 元音起振才听得见
-    "fric":  ((80, 480),  -5, 30),   # 擦音 s f z：留住整段嘶声
-    "aff":   ((60, 400),  -5, 25),   # 塞擦音 ch j：爆破+摩擦整段保留
-}
-
 
 def run(cmd):
     subprocess.run(cmd, check=True, capture_output=True)
-
-
-def synth_wav(voice, text, wav_path, rate=None):
-    aiff = wav_path + ".tmp.aiff"
-    cmd = ["say", "-v", voice, "-o", aiff]
-    if rate:
-        cmd += ["-r", str(rate)]
-    cmd.append(text)
-    run(cmd)
-    run(["afconvert", aiff, wav_path, "-f", "WAVE", "-d", f"LEI16@{SR}", "-c", "1"])
-    os.remove(aiff)
-
-
-def wav_to_m4a(wav_path, m4a_path):
-    run(["afconvert", wav_path, m4a_path, "-f", "m4af", "-d", "aac", "-b", "32000", "-c", "1"])
 
 
 def read_wav(path):
@@ -73,70 +50,70 @@ def write_wav(path, samples):
         w.writeframes(np.clip(samples, -32767, 32767).astype(np.int16).tobytes())
 
 
-def cut_onset(word_wav, out_wav, kind):
-    """从单词录音里剪出起始辅音。返回剪出长度(ms)。"""
-    (_lo, _hi), end_off_ms, fade_out_ms = CUT_KINDS[kind]
-    x = read_wav(word_wav)
-    hop, win = int(0.005 * SR), int(0.010 * SR)
-    n = max(0, (len(x) - win) // hop)
-    rms = np.zeros(n)
-    zcr = np.zeros(n)
-    for i in range(n):
-        f = x[i * hop: i * hop + win]
-        rms[i] = np.sqrt(np.mean(f * f))
-        zcr[i] = np.mean(np.abs(np.diff(np.sign(f)))) / 2
-    peak = rms.max()
-    # 声音起点：连续 3 帧能量高于噪底（f 这类弱擦音能量低，阈值放低）
-    above = rms > 0.02 * peak
-    burst = next((i for i in range(n - 3) if above[i] and above[i + 1] and above[i + 2]), 0)
-    # 元音起点：burst 之后第一处 高能量+低过零率（周期性浊声）
-    vo = next((i for i in range(burst + 1, n) if rms[i] > 0.35 * peak and zcr[i] < 0.12), None)
-    if vo is None:
-        raise RuntimeError(f"{word_wav}: 找不到元音起点")
-    start = max(0, burst * hop - int(0.005 * SR))
-    end = min(len(x), vo * hop + int(end_off_ms / 1000 * SR))
-    if end <= start:
-        raise RuntimeError(f"{word_wav}: 剪辑区间为空")
+def trim_and_normalize(src_any, out_wav):
+    """去首尾静音（只删无声的空气，不碰声音内容）+ 峰值归一。返回有效音长度 ms。"""
+    tmp = out_wav + ".raw.wav"
+    run(["afconvert", src_any, tmp, "-f", "WAVE", "-d", f"LEI16@{SR}", "-c", "1"])
+    x = read_wav(tmp)
+    os.remove(tmp)
+    hop = int(0.010 * SR)
+    n = len(x) // hop
+    rms = np.array([np.sqrt(np.mean(x[i*hop:(i+1)*hop] ** 2)) for i in range(n)])
+    peak = rms.max() or 1
+    active = rms > 0.04 * peak
+    # 合并活动帧为段（间隔<150ms 算同段），取最长段——排除孤立的杂音点
+    segs, i = [], 0
+    while i < n:
+        if active[i]:
+            j, gap = i, 0
+            while j < n and gap < 15:
+                gap = gap + 1 if not active[j] else 0
+                j += 1
+            segs.append((i, j - gap))
+            i = j
+        else:
+            i += 1
+    if not segs:
+        raise RuntimeError(f"{src_any}: 整条无声")
+    a0, a1 = max(segs, key=lambda s: s[1] - s[0])
+    start = max(0, a0 * hop - int(0.06 * SR))
+    end = min(len(x), a1 * hop + int(0.12 * SR))
     seg = x[start:end].copy()
-    fi = min(len(seg), int(0.005 * SR))
-    seg[:fi] *= np.linspace(0, 1, fi)
-    fo = min(len(seg), int(fade_out_ms / 1000 * SR))
-    seg[-fo:] *= np.linspace(1, 0, fo)
     seg *= (0.6 * 32767) / (np.abs(seg).max() or 1)
-    pad_h = np.zeros(int(0.05 * SR))
-    pad_t = np.zeros(int(0.10 * SR))
-    write_wav(out_wav, np.concatenate([pad_h, seg, pad_t]))
-    return (end - start) / SR * 1000
+    write_wav(out_wav, seg)
+    return (a1 - a0) * 10
 
 
 def make_clip(spec):
-    """生成一个条目，返回 (m4a路径, 剪辑长度ms或None)。spec=(voice,text,rate)"""
+    """生成一个条目，返回 (m4a路径, 有效音长度ms或None)。spec=(voice,text,rate)"""
     voice, text, rate = spec
-    h = hashlib.md5(f"v3|{voice}|{rate}|{text}".encode()).hexdigest()
+    if text.startswith("rec:"):
+        src = os.path.join(REC, text[4:] + ".mp3")
+        if not os.path.exists(src):
+            raise RuntimeError(f"缺少录音文件: {src}")
+        sig = hashlib.md5(open(src, "rb").read()).hexdigest()[:12]
+        h = hashlib.md5(f"v4b|rec|{sig}".encode()).hexdigest()
+        m4a = os.path.join(CACHE, h + ".m4a")
+        meta = m4a + ".ms"
+        if not os.path.exists(m4a):
+            wav = m4a + ".trim.wav"
+            ms = trim_and_normalize(src, wav)
+            run(["afconvert", wav, m4a, "-f", "m4af", "-d", "aac", "-b", "32000", "-c", "1"])
+            os.remove(wav)
+            open(meta, "w").write(str(ms))
+        ms = float(open(meta).read()) if os.path.exists(meta) else None
+        return m4a, ms
+    h = hashlib.md5(f"v4|{voice}|{rate}|{text}".encode()).hexdigest()
     m4a = os.path.join(CACHE, h + ".m4a")
-    meta = m4a + ".cutms"
-    if os.path.exists(m4a):
-        cut_ms = float(open(meta).read()) if os.path.exists(meta) else None
-        return m4a, cut_ms
-    if text.startswith("cut:"):
-        _tag, kind, word = text.split(":", 2)
-        word_wav = m4a + ".word.wav"
-        cut_wav = m4a + ".cut.wav"
-        synth_wav(voice, word, word_wav)
-        cut_ms = cut_onset(word_wav, cut_wav, kind)
-        wav_to_m4a(cut_wav, m4a)
-        os.remove(word_wav)
-        os.remove(cut_wav)
-        open(meta, "w").write(str(cut_ms))
-        return m4a, cut_ms
-    aiff = m4a + ".tmp.aiff"
-    cmd = ["say", "-v", voice, "-o", aiff]
-    if rate:
-        cmd += ["-r", str(rate)]
-    cmd.append(text)
-    run(cmd)
-    run(["afconvert", aiff, m4a, "-f", "m4af", "-d", "aac", "-b", "32000", "-c", "1"])
-    os.remove(aiff)
+    if not os.path.exists(m4a):
+        aiff = m4a + ".tmp.aiff"
+        cmd = ["say", "-v", voice, "-o", aiff]
+        if rate:
+            cmd += ["-r", str(rate)]
+        cmd.append(text)
+        run(cmd)
+        run(["afconvert", aiff, m4a, "-f", "m4af", "-d", "aac", "-b", "32000", "-c", "1"])
+        os.remove(aiff)
     return m4a, None
 
 
@@ -173,30 +150,27 @@ def main():
     audio_map, total = {}, 0
     demo_report = []
     for i, (key, spec) in enumerate(sorted(tasks.items())):
-        m4a, cut_ms = make_clip(spec)
+        m4a, ms = make_clip(spec)
         raw = open(m4a, "rb").read()
         total += len(raw)
         audio_map[key] = "data:audio/mp4;base64," + base64.b64encode(raw).decode()
         if key.startswith("d:"):
-            demo_report.append((spec[1], cut_ms, duration_of(m4a)))
+            demo_report.append((spec[1], ms, duration_of(m4a)))
         if (i + 1) % 80 == 0:
             print(f"  …{i + 1}/{len(tasks)}")
 
     print("\n== 单音示范体检 ==")
     bad = 0
-    for text, cut_ms, dur in sorted(demo_report, key=lambda x: x[0]):
-        if text.startswith("cut:"):
-            kind = text.split(":")[1]
-            lo, hi = CUT_KINDS[kind][0]
-            ok = lo <= cut_ms <= hi
-            flag = "" if ok else "  ⚠️区间外"
-            bad += 0 if ok else 1
-            print(f"  [剪辑] {text:<18} 剪出 {cut_ms:5.0f}ms (合理 {lo}-{hi}ms){flag}")
+    n_rec = 0
+    for text, ms, dur in sorted(demo_report, key=lambda x: x[0]):
+        if text.startswith("rec:"):
+            n_rec += 1
+            print(f"  [真人] {text:<26} 有效音 {ms:5.0f}ms")
         else:
             flag = "  ⚠️可疑" if dur > 1.2 else ""
             bad += 1 if dur > 1.2 else 0
-            print(f"  [拟声] {text:<18} {dur:5.2f}s{flag}")
-    print(f"体检结论: {len(demo_report)} 个示范音, {bad} 个可疑")
+            print(f"  [合成] {text:<26} {dur:5.2f}s{flag}")
+    print(f"体检结论: {len(demo_report)} 个示范音（真人 {n_rec} / 合成 {len(demo_report)-n_rec}），{bad} 个可疑")
 
     content = {
         "letters": LETTERS,
