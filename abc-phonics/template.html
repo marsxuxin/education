@@ -335,8 +335,15 @@ function startGame(mode) {
   const qa = questionAudio();
   playSeq(['z:intro_' + mode].concat(qa));
 }
+/* 单音示范重复次数：剪辑出的爆破音很短(cut:开头)，多放一次更容易听清 */
+function demoKeys(demo) {
+  const n = demo.indexOf('cut:') === 0 ? 3 : 2;
+  const keys = [];
+  for (let i = 0; i < n; i++) keys.push('d:' + demo);
+  return keys;
+}
 function questionAudio() {
-  if (G.mode === 'g2') return ['d:' + G.q.demo, 'd:' + G.q.demo];
+  if (G.mode === 'g2') return demoKeys(G.q.demo);
   return ['w:' + G.q.word];
 }
 function nextQuestion() {
@@ -532,8 +539,9 @@ document.addEventListener('click', function (ev) {
     playSeq(u.type === 'letter' ? ['L:' + u.letter] : ['d:' + u.sounds[0].demo]);
   }
   else if (act === 'chant') {
+    // 只放这个音本身，不带单词（单词点词卡自己会读）
     const u = UNIT_BY_ID[el.dataset.id], s = u.sounds[+el.dataset.si];
-    playSeq(['d:' + s.demo, 'd:' + s.demo, 'w:' + s.words[0][0]]);
+    playSeq(demoKeys(s.demo));
   }
   else if (act === 'word') playSeq(['w:' + el.dataset.w]);
   else if (act === 'slow') { ev.stopPropagation(); playSeq(['s:' + el.dataset.w]); }

@@ -8,12 +8,14 @@
   用来生成"单音示范"音频) / words(该发音的高频词, [单词, emoji]) /
   advanced(进阶音, 只展示不进游戏)。
 
-demo 拟声词字典（2026-07-13 经 faster-whisper 机器试听两轮校准）：
+demo 示范音字典（2026-07-13 定稿：机器试听 + 音头剪辑两套机制）：
+- "cut:类别:单词" = 从该单词的录音里剪出起始辅音（build.py 做信号检测手术），
+  类别: ustop 清塞音(k p t) / vstop 浊塞音(b d g) / fric 擦音(s f z) / aff 塞擦音(ch j)
+  ——这是纯辅音示范的唯一可靠做法，TTS 直接念拟声词必然带出元音变成"卡/萨/打"
 - 字母音(长元音)直接用能发出字母名的串: a / ee / eye / oh / you
-- 辅音用 -ah 系: bah kah dah fa gah hah jah kah la pah kwah sa tuh wah yah za
-  cha jah kwah；可持续音用 mmm nnn rrr vvv shh thh
-- 无法用拟声词表达的用真实小词锚定: at it Ed look ox the moo oww ar or er ing
-- 若家长反馈某音不准: 只改对应 demo 字段, 重跑 build.py 即可(有缓存,秒级)
+- 可持续音用拟声词: mmm nnn rrr vvv shh thh（faster-whisper 校验通过）
+- 无法剪辑/拟声的用真实小词锚定: at it Ed look ox the moo oww ar or er ing
+- 若家长反馈某音不准: 只改对应 demo 字段, 重跑 build.py 即可
 
 emoji 均限制在 Unicode 12 及以下，保证华为平板正常显示。
 """
@@ -26,17 +28,17 @@ LETTERS = [
          "words": [["cake", "🎂"], ["snake", "🐍"], ["grape", "🍇"], ["face", "😊"]]},
     ]},
     {"letter": "B", "sounds": [
-        {"ipa": "/b/", "label": "它的声音", "demo": "bah",
+        {"ipa": "/b/", "label": "它的声音", "demo": "cut:vstop:ball",
          "words": [["ball", "⚽"], ["banana", "🍌"], ["bear", "🐻"], ["bed", "🛏️"]]},
     ]},
     {"letter": "C", "sounds": [
-        {"ipa": "/k/", "label": "常用发音", "demo": "kah",
+        {"ipa": "/k/", "label": "常用发音", "demo": "cut:ustop:cat",
          "words": [["cat", "🐱"], ["car", "🚗"], ["cup", "☕"], ["cow", "🐮"]]},
-        {"ipa": "/s/", "label": "遇到 e·i·y 时", "demo": "sa", "advanced": True,
+        {"ipa": "/s/", "label": "遇到 e·i·y 时", "demo": "cut:fric:sun", "advanced": True,
          "words": [["ice", "🧊"], ["rice", "🍚"], ["city", "🏙️"]]},
     ]},
     {"letter": "D", "sounds": [
-        {"ipa": "/d/", "label": "它的声音", "demo": "duh",
+        {"ipa": "/d/", "label": "它的声音", "demo": "cut:vstop:dog",
          "words": [["dog", "🐶"], ["duck", "🦆"], ["dad", "👨"], ["door", "🚪"]]},
     ]},
     {"letter": "E", "sounds": [
@@ -46,13 +48,13 @@ LETTERS = [
          "words": [["he", "👦"], ["she", "👧"], ["we", "👨‍👩‍👧"], ["me", "🙋"]]},
     ]},
     {"letter": "F", "sounds": [
-        {"ipa": "/f/", "label": "它的声音", "demo": "fa",
+        {"ipa": "/f/", "label": "它的声音", "demo": "cut:fric:fish",
          "words": [["fish", "🐟"], ["five", "5️⃣"], ["fox", "🦊"], ["foot", "🦶"]]},
     ]},
     {"letter": "G", "sounds": [
-        {"ipa": "/g/", "label": "常用发音", "demo": "gah",
+        {"ipa": "/g/", "label": "常用发音", "demo": "cut:vstop:goat",
          "words": [["goat", "🐐"], ["girl", "👧"], ["gift", "🎁"], ["green", "💚"]]},
-        {"ipa": "/dʒ/", "label": "少数单词里", "demo": "jah", "advanced": True,
+        {"ipa": "/dʒ/", "label": "少数单词里", "demo": "cut:aff:juice", "advanced": True,
          "words": [["orange", "🍊"], ["giraffe", "🦒"]]},
     ]},
     {"letter": "H", "sounds": [
@@ -66,11 +68,11 @@ LETTERS = [
          "words": [["five", "5️⃣"], ["kite", "🪁"], ["bike", "🚲"], ["ice", "🧊"]]},
     ]},
     {"letter": "J", "sounds": [
-        {"ipa": "/dʒ/", "label": "它的声音", "demo": "jah",
+        {"ipa": "/dʒ/", "label": "它的声音", "demo": "cut:aff:juice",
          "words": [["juice", "🧃"], ["jam", "🍓"], ["jump", "🤸"], ["jacket", "🧥"]]},
     ]},
     {"letter": "K", "sounds": [
-        {"ipa": "/k/", "label": "它的声音", "demo": "kah",
+        {"ipa": "/k/", "label": "它的声音", "demo": "cut:ustop:cat",
          "words": [["key", "🔑"], ["king", "👑"], ["kite", "🪁"], ["kid", "🧒"]]},
     ]},
     {"letter": "L", "sounds": [
@@ -94,7 +96,7 @@ LETTERS = [
          "words": [["mother", "👩"], ["love", "❤️"], ["come", "👋"]]},
     ]},
     {"letter": "P", "sounds": [
-        {"ipa": "/p/", "label": "它的声音", "demo": "pah",
+        {"ipa": "/p/", "label": "它的声音", "demo": "cut:ustop:pig",
          "words": [["pig", "🐷"], ["pen", "🖊️"], ["panda", "🐼"], ["pink", "🌸"]]},
     ]},
     {"letter": "Q", "sounds": [
@@ -106,13 +108,13 @@ LETTERS = [
          "words": [["rabbit", "🐰"], ["red", "🔴"], ["run", "🏃"], ["rice", "🍚"]]},
     ]},
     {"letter": "S", "sounds": [
-        {"ipa": "/s/", "label": "常用发音", "demo": "sa",
+        {"ipa": "/s/", "label": "常用发音", "demo": "cut:fric:sun",
          "words": [["sun", "☀️"], ["six", "6️⃣"], ["star", "⭐"], ["sit", "🪑"]]},
-        {"ipa": "/z/", "label": "有时读 z", "demo": "za", "advanced": True,
+        {"ipa": "/z/", "label": "有时读 z", "demo": "cut:fric:zoo", "advanced": True,
          "words": [["is", "☑️"], ["his", "👦"], ["nose", "👃"]]},
     ]},
     {"letter": "T", "sounds": [
-        {"ipa": "/t/", "label": "它的声音", "demo": "tuh",
+        {"ipa": "/t/", "label": "它的声音", "demo": "cut:ustop:ten",
          "words": [["ten", "🔟"], ["tiger", "🐯"], ["turtle", "🐢"], ["top", "🔝"]]},
     ]},
     {"letter": "U", "sounds": [
@@ -142,7 +144,7 @@ LETTERS = [
          "words": [["baby", "👶"], ["happy", "😄"], ["candy", "🍬"], ["family", "👪"]]},
     ]},
     {"letter": "Z", "sounds": [
-        {"ipa": "/z/", "label": "它的声音", "demo": "za",
+        {"ipa": "/z/", "label": "它的声音", "demo": "cut:fric:zoo",
          "words": [["zoo", "🦁"], ["zebra", "🦓"], ["zip", "🤐"], ["zero", "0️⃣"]]},
     ]},
 ]
@@ -153,7 +155,7 @@ COMBOS = [
          "words": [["sheep", "🐑"], ["ship", "🚢"], ["shoe", "👟"], ["fish", "🐟"]]},
     ]},
     {"letter": "ch", "sounds": [
-        {"ipa": "/tʃ/", "label": "像小火车", "demo": "cha",
+        {"ipa": "/tʃ/", "label": "像小火车", "demo": "cut:aff:chair",
          "words": [["chair", "🪑"], ["cheese", "🧀"], ["chicken", "🐔"], ["peach", "🍑"]]},
     ]},
     {"letter": "th", "sounds": [
@@ -167,7 +169,7 @@ COMBOS = [
          "words": [["whale", "🐳"], ["white", "🤍"], ["what", "❓"], ["when", "⏰"]]},
     ]},
     {"letter": "ck", "sounds": [
-        {"ipa": "/k/", "label": "和 k 一样", "demo": "kah",
+        {"ipa": "/k/", "label": "和 k 一样", "demo": "cut:ustop:cat",
          "words": [["duck", "🦆"], ["clock", "⏰"], ["sock", "🧦"], ["black", "⚫"]]},
     ]},
     {"letter": "ng", "sounds": [
