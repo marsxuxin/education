@@ -134,6 +134,13 @@ h2.sec { font-size:clamp(17px,2.6vw,21px); color:#33557a; margin:18px 4px 10px; 
   background:#eaf4ff; border:2px solid #bcd9f3; color:#2f5d94; font-weight:bold; text-decoration:none;
   font-size:clamp(15px,2.6vw,18px); }
 .lesson .lpart:active { background:#d3e9ff; }
+.backbtn { padding:10px 16px; border-radius:12px; background:#eaf4ff; border:2px solid #bcd9f3;
+  color:#2f5d94; font-weight:bold; font-size:clamp(15px,2.6vw,18px); cursor:pointer; }
+.videowrap { margin-top:4px; }
+.videowrap iframe { width:100%; height:calc(100vh - 200px); min-height:320px; border:2px solid #cfe3f5;
+  border-radius:14px; background:#000; }
+.videofallback { text-align:center; color:#7b93ab; font-size:14px; margin-top:8px; }
+.videofallback a { color:#3c6fb2; }
 #tabbar { position:fixed; left:0; right:0; bottom:0; display:flex; justify-content:space-around; gap:6px;
   background:#ffffffee; backdrop-filter:blur(8px); padding:8px 10px calc(8px + env(safe-area-inset-bottom));
   box-shadow:0 -4px 18px rgba(80,120,160,.14); z-index:20; }
@@ -278,7 +285,8 @@ function render() {
   else if (view.name === 'play') el.innerHTML = vPlay();
   else if (view.name === 'rewards') el.innerHTML = vRewards();
   else if (view.name === 'lessons') el.innerHTML = vLessons();
-  const tab = view.name === 'detail' ? 'explore' : (view.name === 'play' ? 'games' : view.name);
+  else if (view.name === 'video') el.innerHTML = vVideo(view.li, view.pi);
+  const tab = view.name === 'detail' ? 'explore' : (view.name === 'play' ? 'games' : (view.name === 'video' ? 'lessons' : view.name));
   document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.v === tab));
 }
 
@@ -518,13 +526,24 @@ const PART_ICON = {'单词': '🔤', '阅读': '📖', '语法': '✏️', '句�
 function vLessons() {
   let h = '<header class="apphead"><div class="logo">📺 复习课堂</div><div class="starchip">⭐ ' + state.stars + '</div></header>';
   h += '<div class="hintbar">🎬 想复习哪一课？点一下，就能看老师上课的录像啦！</div>';
-  CONTENT.lessons.forEach(L => {
+  CONTENT.lessons.forEach((L, li) => {
     h += '<div class="lesson"><div class="ltitle">第' + (CN_NUM[L.n - 1] || L.n) + '课</div><div class="lparts">';
-    L.parts.forEach(p => {
-      h += '<a class="lpart" href="' + p[1] + '" target="_blank" rel="noopener">' + (PART_ICON[p[0]] || '🎬') + ' ' + p[0] + '</a>';
+    L.parts.forEach((p, pi) => {
+      h += '<button class="lpart" data-act="video" data-li="' + li + '" data-pi="' + pi + '">' + (PART_ICON[p[0]] || '🎬') + ' ' + p[0] + '</button>';
     });
     h += '</div></div>';
   });
+  return h;
+}
+
+/* 课程视频内嵌页：不跳出窗口，返回仍在复习课堂 */
+function vVideo(li, pi) {
+  const L = CONTENT.lessons[li], p = L.parts[pi];
+  const title = '第' + (CN_NUM[L.n - 1] || L.n) + '课 · ' + p[0];
+  let h = '<header class="apphead"><button class="backbtn" data-act="backlessons">← 返回</button>' +
+    '<div class="logo">' + (PART_ICON[p[0]] || '🎬') + ' ' + title + '</div><div></div></header>';
+  h += '<div class="videowrap"><iframe src="' + p[1] + '" allowfullscreen allow="fullscreen; autoplay"></iframe></div>';
+  h += '<div class="videofallback">视频没显示？<a href="' + p[1] + '" target="_blank" rel="noopener">点这里在新窗口打开</a></div>';
   return h;
 }
 
@@ -557,6 +576,8 @@ document.addEventListener('click', function (ev) {
   ac();
   const act = el.dataset.act;
   if (act === 'tab') { G = null; go({name:el.dataset.v}); }
+  else if (act === 'video') go({name:'video', li:+el.dataset.li, pi:+el.dataset.pi});
+  else if (act === 'backlessons') go({name:'lessons'});
   else if (act === 'open') go({name:'detail', id:el.dataset.id});
   else if (act === 'hero') {
     const u = UNIT_BY_ID[el.dataset.id];
