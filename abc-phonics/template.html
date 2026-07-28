@@ -126,6 +126,34 @@ h2.sec { font-size:clamp(17px,2.6vw,21px); color:#33557a; margin:18px 4px 10px; 
 .parentlink { display:block; margin:22px auto 0; color:#8aa4c0; font-weight:bold; font-size:15px; text-decoration:underline; }
 
 /* ===== 底部导航 ===== */
+/* 课本单词 */
+.lwrow { display:flex; align-items:center; justify-content:space-between; width:100%;
+  background:#fff; border:2px solid #cfe3f5; border-radius:14px; padding:13px 16px; margin:8px 0;
+  font-size:clamp(15px,2.6vw,18px); font-weight:bold; color:#33557a; cursor:pointer; }
+.lwrow:active { background:#e3f1ff; }
+.lwrow .lc { color:#7b93ab; font-size:clamp(13px,2.2vw,15px); }
+.lwlist { display:flex; flex-direction:column; gap:9px; }
+.lwcard { display:flex; align-items:center; gap:10px; background:#fff; border:2px solid #cfe3f5;
+  border-radius:14px; padding:11px 14px; cursor:pointer; flex-wrap:wrap; }
+.lwcard:active { background:#eaf4ff; }
+.lwcard .em { font-size:clamp(26px,4.4vw,34px); }
+.lwmain { display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+.lwcard .lww { font-size:clamp(19px,3.2vw,25px); font-weight:bold; color:#2f3a4f; letter-spacing:.5px; }
+.lwcard .hl { color:#d4537e; background:#fbeaf0; border-radius:5px; padding:0 3px; }
+.lwcard .lwipa { font-size:clamp(12px,2vw,14px); color:#3c6fb2; background:#eaf4ff;
+  border-radius:8px; padding:2px 8px; align-self:flex-start; }
+.cnbtn { border:2px solid #d8e7f6; background:#f4f9ff; color:#5b789a; border-radius:10px;
+  padding:5px 10px; font-size:clamp(12px,2vw,14px); font-weight:bold; cursor:pointer; }
+.lwcard .cn { width:100%; color:#5b789a; font-size:clamp(13px,2.2vw,15px); font-weight:bold; }
+/* 字母卡里的"课本里的这个音" */
+.fromlesson { background:#f2fbf6; border:2px solid #bfe6d2; border-radius:14px; padding:11px 14px; margin-top:10px; }
+.fromlesson .fl-t { font-size:clamp(13px,2.2vw,15px); font-weight:bold; color:#2c7a55; margin-bottom:7px; }
+.fromlesson .fl-w { display:inline-flex; align-items:center; gap:4px; background:#fff; border:2px solid #bfe6d2;
+  border-radius:10px; padding:4px 9px; margin:0 6px 6px 0; font-size:clamp(13px,2.2vw,16px);
+  font-weight:bold; color:#2f3a4f; cursor:pointer; }
+.fromlesson .fl-w .n { font-size:11px; color:#7fae95; font-weight:bold; }
+.fromlesson .fl-w .hl { color:#d4537e; }
+
 /* 复习课堂 */
 .lesson { background:#fff; border:2px solid #cfe3f5; border-radius:16px; padding:14px 16px; margin:12px 0; }
 .lesson .ltitle { font-size:clamp(17px,2.8vw,21px); font-weight:bold; color:#33557a; margin-bottom:10px; }
@@ -286,7 +314,9 @@ function render() {
   else if (view.name === 'rewards') el.innerHTML = vRewards();
   else if (view.name === 'lessons') el.innerHTML = vLessons();
   else if (view.name === 'video') el.innerHTML = vVideo(view.li, view.pi);
-  const tab = view.name === 'detail' ? 'explore' : (view.name === 'play' ? 'games' : (view.name === 'video' ? 'lessons' : view.name));
+  else if (view.name === 'lwords') el.innerHTML = vLessonWords(view.li);
+  const tab = (view.name === 'detail' || view.name === 'lwords') ? 'explore' :
+    (view.name === 'play' ? 'games' : (view.name === 'video' ? 'lessons' : view.name));
   document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.v === tab));
 }
 
@@ -304,7 +334,52 @@ function vExplore() {
       (crowned(u.letter) ? '<span class="crown">👑</span>' : '') + '</div>';
   });
   h += '</div>';
+  if (CONTENT.lessonWords && CONTENT.lessonWords.length) {
+    h += '<h2 class="sec">📚 课本单词</h2>';
+    h += '<div class="hintbar" style="margin:0 0 10px">课上学过的词，点开听一听、跟着读</div>';
+    CONTENT.lessonWords.forEach((L, li) => {
+      h += '<button class="lwrow" data-act="lwords" data-li="' + li + '">' +
+        '<span class="ln">第' + (CN_NUM[L.n - 1] || L.n) + '课 · ' + L.topic + '</span>' +
+        '<span class="lc">' + L.words.length + ' 词 ›</span></button>';
+    });
+  }
   return h;
+}
+
+/* 某一课的单词表：点词听音，点高亮字母跳到发音卡 */
+function vLessonWords(li) {
+  const L = CONTENT.lessonWords[li];
+  let h = '<div class="pagehead"><button class="backbtn" data-act="tab" data-v="explore">⬅ 返回</button>' +
+    '<div class="ttl">📚 第' + (CN_NUM[L.n - 1] || L.n) + '课 · ' + L.topic + '</div></div>';
+  h += '<div class="hintbar">👆 点单词听发音　🐢 慢速　彩色字母＝这个词里的重点音，点它去看规则</div>';
+  h += '<div class="lwlist">';
+  L.words.forEach(r => {
+    const lk = r.link;
+    let disp = r.w;
+    if (lk) {
+      disp = r.w.slice(0, lk.pos) + '<span class="hl" data-act="tolink" data-u="' + lk.unit + '">' +
+        r.w.slice(lk.pos, lk.pos + lk.len) + '</span>' + r.w.slice(lk.pos + lk.len);
+    }
+    h += '<div class="lwcard" data-act="word" data-w="' + r.w + '">' +
+      '<span class="em">' + r.e + '</span>' +
+      '<span class="lwmain"><span class="lww">' + disp + '</span>' +
+      (lk ? '<span class="lwipa" data-act="tolink" data-u="' + lk.unit + '">' + lk.unit + ' ' + lk.ipa + ' ›</span>' : '') +
+      '</span>' +
+      '<button class="cnbtn" data-act="cn" data-w="' + r.w + '">意思</button>' +
+      '<button class="turtle" data-act="slow" data-w="' + r.w + '">🐢</button>' +
+      '<span class="cn" id="cn-' + r.w + '" style="display:none">' + r.cn + '</span></div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+/* 反向索引：这张发音卡的音，在课本哪些词里出现过 */
+function lessonWordsOfUnit(id) {
+  const out = [];
+  (CONTENT.lessonWords || []).forEach(L => L.words.forEach(r => {
+    if (r.link && r.link.unit === id) out.push({w: r.w, n: L.n, link: r.link});
+  }));
+  return out;
 }
 
 function vDetail(id) {
@@ -323,7 +398,20 @@ function vDetail(id) {
         '<span class="wt">' + hl(pair[0], id) + '</span>' +
         '<button class="turtle" data-act="slow" data-w="' + pair[0] + '">🐢</button></div>';
     });
-    h += '</div></div>';
+    h += '</div>';
+    // 这张卡的音在课本里出现过的词（机器核对过发音才会出现在这里）
+    const fromL = lessonWordsOfUnit(id).filter(r => r.link.ipa === s.ipa);
+    if (fromL.length) {
+      h += '<div class="fromlesson"><div class="fl-t">📚 课本里的这个音</div>';
+      fromL.forEach(r => {
+        const p = r.link.pos, L = r.link.len;
+        h += '<span class="fl-w" data-act="word" data-w="' + r.w + '">' +
+          r.w.slice(0, p) + '<span class="hl">' + r.w.slice(p, p + L) + '</span>' + r.w.slice(p + L) +
+          '<span class="n">第' + r.n + '课</span></span>';
+      });
+      h += '</div>';
+    }
+    h += '</div>';
   });
   return h;
 }
@@ -339,6 +427,15 @@ function vGames() {
     h += '<div class="gamecard" data-act="game" data-g="' + c[0] + '"><span class="ic">' + c[1] + '</span>' +
       '<div><div class="nm">' + c[2] + '</div><div class="ds">' + c[3] + '</div></div><span class="go">▶</span></div>';
   });
+  if (CONTENT.lessonWords && CONTENT.lessonWords.length) {
+    h += '<h2 class="sec">📚 课本闯关</h2>';
+    h += '<div class="hintbar" style="margin:0 0 10px">只考这一课学过的词，和课堂完全同步</div>';
+    CONTENT.lessonWords.forEach((L, li) => {
+      h += '<button class="lwrow" data-act="lwgame" data-li="' + li + '">' +
+        '<span class="ln">第' + (CN_NUM[L.n - 1] || L.n) + '课 · ' + L.topic + '</span>' +
+        '<span class="lc">' + L.words.length + ' 词 ▶</span></button>';
+    });
+  }
   h += '<div class="hintbar" style="margin-top:18px">每答对一题得 1 颗 ⭐，集满 12 颗解锁一张新贴纸！</div>';
   return h;
 }
@@ -347,12 +444,13 @@ function vGames() {
 let G = null;
 const TOTAL = 10;
 
-function startGame(mode) {
-  G = {mode:mode, round:1, stars:0, firstTry:true, locked:false, intro:true, q:null};
+function startGame(mode, li) {
+  G = {mode:mode, li:(li == null ? -1 : li), round:1, stars:0, firstTry:true, locked:false, intro:true, q:null};
   nextQuestion();
   go({name:'play'});
   const qa = questionAudio();
-  playSeq(['z:intro_' + mode].concat(qa));
+  // 课本闯关沿用"听音选词"的开场白（玩法一样）
+  playSeq(['z:intro_' + (mode === 'lw' ? 'g1' : mode)].concat(qa));
 }
 /* 单音示范统一放两遍，中间留出模仿的间隙 */
 function demoKeys(demo) {
@@ -364,7 +462,17 @@ function questionAudio() {
 }
 function nextQuestion() {
   G.firstTry = true; G.locked = false;
-  if (G.mode === 'g1') {
+  if (G.mode === 'lw') {
+    // 只考这一课的词；干扰项也来自同一课（同课对比才练得到听辨）
+    const pool = CONTENT.lessonWords[G.li].words;
+    const target = pool[Math.floor(Math.random() * pool.length)];
+    const opts = [{word:target.w, emoji:target.e}];
+    shuffle(pool).forEach(r => {
+      if (opts.length < 3 && r.w !== target.w && !opts.some(o => o.emoji === r.e)) opts.push({word:r.w, emoji:r.e});
+    });
+    G.q = {word:target.w, answer:target.w, options:shuffle(opts),
+      crownUnits:(target.link ? [target.link.unit] : [])};
+  } else if (G.mode === 'g1') {
     const target = weightedWord(GAME_WORDS);
     const opts = [target];
     shuffle(GAME_WORDS).forEach(r => {
@@ -406,7 +514,7 @@ function vPlay() {
   let h = '<div class="playhead"><button class="backbtn" data-act="tab" data-v="games">⬅ 退出</button>' +
     '<div class="progress">第 ' + G.round + ' / ' + TOTAL + ' 题</div>' +
     '<div class="roundstar">⭐ ' + G.stars + '</div></div>';
-  if (G.mode === 'g1') {
+  if (G.mode === 'g1' || G.mode === 'lw') {
     h += '<div class="qcard"><button class="bigspeak" data-act="replay">🔊</button><div class="qtip">听一听，下面哪个单词是它？</div></div>';
     h += '<div class="replayrow"><button class="rbtn" data-act="replay">🔊 再听一遍</button><button class="rbtn" data-act="replayslow">🐢 慢速听</button></div>';
     h += '<div class="opts">';
@@ -576,6 +684,14 @@ document.addEventListener('click', function (ev) {
   ac();
   const act = el.dataset.act;
   if (act === 'tab') { G = null; go({name:el.dataset.v}); }
+  else if (act === 'lwords') go({name:'lwords', li:+el.dataset.li});
+  else if (act === 'lwgame') startGame('lw', +el.dataset.li);
+  else if (act === 'tolink') { ev.stopPropagation(); go({name:'detail', id:el.dataset.u}); }
+  else if (act === 'cn') {
+    ev.stopPropagation();
+    const c = document.getElementById('cn-' + el.dataset.w);
+    if (c) c.style.display = c.style.display === 'none' ? 'inline' : 'none';
+  }
   else if (act === 'video') go({name:'video', li:+el.dataset.li, pi:+el.dataset.pi});
   else if (act === 'backlessons') go({name:'lessons'});
   else if (act === 'open') go({name:'detail', id:el.dataset.id});

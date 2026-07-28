@@ -29,6 +29,13 @@ try:
 except ImportError:
     LESSONS = []
 
+# 课本词表与"词→发音卡"链接（链接由 tools/build_word_links.py 机器生成并三重核对）
+try:
+    from lesson_words import LESSON_WORDS
+    from word_links import WORD_LINKS
+except ImportError:
+    LESSON_WORDS, WORD_LINKS = [], {}
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(ROOT, "audio_cache")
 DIST = os.path.join(ROOT, "dist")
@@ -145,6 +152,10 @@ def collect_tasks():
             for w, _emoji in s["words"]:
                 tasks[f"w:{w}"] = (VOICE_EN, w, None)
                 tasks[f"s:{w}"] = (VOICE_EN, w, SLOW_RATE)
+    for _n, _topic, words in LESSON_WORDS:      # 课本词也要常速+慢速两版
+        for w, _emoji, _cn in words:
+            tasks[f"w:{w}"] = (VOICE_EN, w, None)
+            tasks[f"s:{w}"] = (VOICE_EN, w, SLOW_RATE)
     for k, text in ZH_CLIPS.items():
         tasks[f"z:{k}"] = (VOICE_ZH, text, None)
     return tasks
@@ -187,6 +198,10 @@ def main():
         "pairs": CONFUSION_PAIRS,
         "stickers": STICKERS,
         "lessons": [],
+        "lessonWords": [{"n": n, "topic": topic,
+                         "words": [{"w": w, "e": e, "cn": cn,
+                                    "link": WORD_LINKS.get(w)} for w, e, cn in ws]}
+                        for n, topic, ws in LESSON_WORDS],
     }
     tpl = open(os.path.join(ROOT, "template.html"), encoding="utf-8").read()
 
