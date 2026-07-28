@@ -132,19 +132,22 @@ h2.sec { font-size:clamp(17px,2.6vw,21px); color:#33557a; margin:18px 4px 10px; 
   font-size:clamp(15px,2.6vw,18px); font-weight:bold; color:#33557a; cursor:pointer; }
 .lwrow:active { background:#e3f1ff; }
 .lwrow .lc { color:#7b93ab; font-size:clamp(13px,2.2vw,15px); }
-.lwlist { display:flex; flex-direction:column; gap:9px; }
-.lwcard { display:flex; align-items:center; gap:10px; background:#fff; border:2px solid #cfe3f5;
-  border-radius:14px; padding:11px 14px; cursor:pointer; flex-wrap:wrap; }
-.lwcard:active { background:#eaf4ff; }
-.lwcard .em { font-size:clamp(26px,4.4vw,34px); }
-.lwmain { display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
-.lwcard .lww { font-size:clamp(19px,3.2vw,25px); font-weight:bold; color:#2f3a4f; letter-spacing:.5px; }
+.lwlist { display:flex; flex-direction:column; gap:11px; }
+.lwcard { background:#fff; border:2px solid #cfe3f5; border-radius:14px; padding:6px; }
+/* 听单词：一整块大按钮，和右边的小按钮用间距+分隔线隔开，指头不会点错 */
+.lwtap { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:11px; cursor:pointer; }
+.lwtap:active { background:#eaf4ff; }
+.lwtap .em { font-size:clamp(28px,4.6vw,36px); }
+.lwtap .lww { flex:1; font-size:clamp(20px,3.4vw,26px); font-weight:bold; color:#2f3a4f; letter-spacing:.5px; }
+.lwtap .spk { font-size:clamp(19px,3vw,24px); opacity:.5; }
 .lwcard .hl { color:#d4537e; background:#fbeaf0; border-radius:5px; padding:0 3px; }
-.lwcard .lwipa { font-size:clamp(12px,2vw,14px); color:#3c6fb2; background:#eaf4ff;
-  border-radius:8px; padding:2px 8px; align-self:flex-start; }
-.cnbtn { border:2px solid #d8e7f6; background:#f4f9ff; color:#5b789a; border-radius:10px;
-  padding:5px 10px; font-size:clamp(12px,2vw,14px); font-weight:bold; cursor:pointer; }
-.lwcard .cn { width:100%; color:#5b789a; font-size:clamp(13px,2.2vw,15px); font-weight:bold; }
+.lwacts { display:flex; gap:8px; flex-wrap:wrap; padding:9px 12px 4px;
+  border-top:2px dashed #e3eef8; margin-top:2px; }
+.lwbtn { border:2px solid #d8e7f6; background:#f4f9ff; color:#5b789a; border-radius:11px;
+  padding:11px 15px; font-size:clamp(13px,2.1vw,15px); font-weight:bold; cursor:pointer; }
+.lwbtn:active { background:#dceaf9; }
+.lwbtn.rule { border-color:#f3cfdd; background:#fdf2f6; color:#c04e79; }
+.lwcard .cn { padding:2px 12px 8px; color:#5b789a; font-size:clamp(14px,2.3vw,16px); font-weight:bold; }
 /* 字母卡里的"课本里的这个音" */
 .fromlesson { background:#f2fbf6; border:2px solid #bfe6d2; border-radius:14px; padding:11px 14px; margin-top:10px; }
 .fromlesson .fl-t { font-size:clamp(13px,2.2vw,15px); font-weight:bold; color:#2c7a55; margin-bottom:7px; }
@@ -304,7 +307,23 @@ function crowned(id) { return (state.crowns[id] || 0) >= 4; }
 
 /* =============== 路由与渲染 =============== */
 let view = {name:'explore'};
-function go(v) { stopAudio(); view = v; render(); window.scrollTo(0, 0); }
+/* 导航：记住来路和滚动位置，返回时原样退回上一步（而不是一律跳回顶层） */
+const navStack = [];
+function go(v, opts) {
+  stopAudio();
+  if (!(opts && opts.replace)) {
+    navStack.push({view:view, scroll:window.scrollY || 0});
+    if (navStack.length > 30) navStack.shift();
+  }
+  view = v; render(); window.scrollTo(0, 0);
+}
+function goBack(fallback) {
+  const prev = navStack.pop();
+  if (!prev) { go(fallback || {name:'explore'}, {replace:true}); return; }
+  stopAudio();
+  view = prev.view; render();
+  window.scrollTo(0, prev.scroll || 0);   // 回到离开时看的位置
+}
 function render() {
   const el = document.getElementById('view');
   if (view.name === 'explore') el.innerHTML = vExplore();
@@ -346,28 +365,34 @@ function vExplore() {
   return h;
 }
 
-/* 某一课的单词表：点词听音，点高亮字母跳到发音卡 */
+/* 某一课的单词表。点击区分两块，互不干扰：
+   左边一整块（图＋单词）＝听单词；右边独立按钮＝慢速 / 意思 / 去看这个音的规则。
+   高亮字母只做视觉标记，不再可点——避免和"听单词"挤在一起误触。 */
 function vLessonWords(li) {
   const L = CONTENT.lessonWords[li];
-  let h = '<div class="pagehead"><button class="backbtn" data-act="tab" data-v="explore">⬅ 返回</button>' +
+  let h = '<div class="pagehead"><button class="backbtn" data-act="back">⬅ 返回</button>' +
     '<div class="ttl">📚 第' + (CN_NUM[L.n - 1] || L.n) + '课 · ' + L.topic + '</div></div>';
-  h += '<div class="hintbar">👆 点单词听发音　🐢 慢速　彩色字母＝这个词里的重点音，点它去看规则</div>';
+  h += '<div class="hintbar">👆 点左边的单词听发音　右边按钮：🐢 慢速 · 意思 · 去看这个音怎么读</div>';
   h += '<div class="lwlist">';
   L.words.forEach(r => {
     const lk = r.link;
     let disp = r.w;
     if (lk) {
-      disp = r.w.slice(0, lk.pos) + '<span class="hl" data-act="tolink" data-u="' + lk.unit + '">' +
+      disp = r.w.slice(0, lk.pos) + '<span class="hl">' +
         r.w.slice(lk.pos, lk.pos + lk.len) + '</span>' + r.w.slice(lk.pos + lk.len);
     }
-    h += '<div class="lwcard" data-act="word" data-w="' + r.w + '">' +
+    h += '<div class="lwcard">';
+    h += '<div class="lwtap" data-act="word" data-w="' + r.w + '">' +
       '<span class="em">' + r.e + '</span>' +
-      '<span class="lwmain"><span class="lww">' + disp + '</span>' +
-      (lk ? '<span class="lwipa" data-act="tolink" data-u="' + lk.unit + '">' + lk.unit + ' ' + lk.ipa + ' ›</span>' : '') +
-      '</span>' +
-      '<button class="cnbtn" data-act="cn" data-w="' + r.w + '">意思</button>' +
-      '<button class="turtle" data-act="slow" data-w="' + r.w + '">🐢</button>' +
-      '<span class="cn" id="cn-' + r.w + '" style="display:none">' + r.cn + '</span></div>';
+      '<span class="lww">' + disp + '</span>' +
+      '<span class="spk">🔊</span></div>';
+    h += '<div class="lwacts">' +
+      '<button class="lwbtn" data-act="slow" data-w="' + r.w + '">🐢 慢速</button>' +
+      '<button class="lwbtn" data-act="cn" data-w="' + r.w + '">意思</button>' +
+      (lk ? '<button class="lwbtn rule" data-act="tolink" data-u="' + lk.unit + '">' +
+        lk.unit + ' ' + lk.ipa + ' 怎么读 ›</button>' : '') +
+      '</div>';
+    h += '<div class="cn" id="cn-' + r.w + '" style="display:none">' + r.cn + '</div></div>';
   });
   h += '</div>';
   return h;
@@ -385,7 +410,7 @@ function lessonWordsOfUnit(id) {
 function vDetail(id) {
   const u = UNIT_BY_ID[id];
   const disp = u.type === 'letter' ? u.letter + u.letter.toLowerCase() : u.letter;
-  let h = '<div class="pagehead"><button class="backbtn" data-act="tab" data-v="explore">⬅ 返回</button><div class="ttl">认识 ' + disp + '</div></div>';
+  let h = '<div class="pagehead"><button class="backbtn" data-act="back">⬅ 返回</button><div class="ttl">认识 ' + disp + '</div></div>';
   h += '<div class="herocard" data-act="hero" data-id="' + id + '"><div class="big">' + disp + '</div><div class="tip">👆 点我听' + (u.type === 'letter' ? '字母名' : '发音') + '</div></div>';
   u.sounds.forEach((s, si) => {
     h += '<div class="soundcard' + (s.advanced ? ' adv' : '') + '">';
@@ -683,7 +708,8 @@ document.addEventListener('click', function (ev) {
   if (!el) return;
   ac();
   const act = el.dataset.act;
-  if (act === 'tab') { G = null; go({name:el.dataset.v}); }
+  if (act === 'tab') { G = null; navStack.length = 0; go({name:el.dataset.v}, {replace:true}); }
+  else if (act === 'back') goBack({name:'explore'});
   else if (act === 'lwords') go({name:'lwords', li:+el.dataset.li});
   else if (act === 'lwgame') startGame('lw', +el.dataset.li);
   else if (act === 'tolink') { ev.stopPropagation(); go({name:'detail', id:el.dataset.u}); }
@@ -693,7 +719,7 @@ document.addEventListener('click', function (ev) {
     if (c) c.style.display = c.style.display === 'none' ? 'inline' : 'none';
   }
   else if (act === 'video') go({name:'video', li:+el.dataset.li, pi:+el.dataset.pi});
-  else if (act === 'backlessons') go({name:'lessons'});
+  else if (act === 'backlessons') goBack({name:'lessons'});
   else if (act === 'open') go({name:'detail', id:el.dataset.id});
   else if (act === 'hero') {
     const u = UNIT_BY_ID[el.dataset.id];
