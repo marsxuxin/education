@@ -126,6 +126,14 @@ h2.sec { font-size:clamp(17px,2.6vw,21px); color:#33557a; margin:18px 4px 10px; 
 .parentlink { display:block; margin:22px auto 0; color:#8aa4c0; font-weight:bold; font-size:15px; text-decoration:underline; }
 
 /* ===== 底部导航 ===== */
+/* 复习课堂 */
+.lesson { background:#fff; border:2px solid #cfe3f5; border-radius:16px; padding:14px 16px; margin:12px 0; }
+.lesson .ltitle { font-size:clamp(17px,2.8vw,21px); font-weight:bold; color:#33557a; margin-bottom:10px; }
+.lesson .lparts { display:flex; gap:10px; flex-wrap:wrap; }
+.lesson .lpart { flex:1; min-width:96px; text-align:center; padding:12px 8px; border-radius:12px;
+  background:#eaf4ff; border:2px solid #bcd9f3; color:#2f5d94; font-weight:bold; text-decoration:none;
+  font-size:clamp(15px,2.6vw,18px); }
+.lesson .lpart:active { background:#d3e9ff; }
 #tabbar { position:fixed; left:0; right:0; bottom:0; display:flex; justify-content:space-around; gap:6px;
   background:#ffffffee; backdrop-filter:blur(8px); padding:8px 10px calc(8px + env(safe-area-inset-bottom));
   box-shadow:0 -4px 18px rgba(80,120,160,.14); z-index:20; }
@@ -165,6 +173,7 @@ h2.sec { font-size:clamp(17px,2.6vw,21px); color:#33557a; margin:18px 4px 10px; 
   <nav id="tabbar">
     <button data-act="tab" data-v="explore"><span class="i">🔤</span>字母乐园</button>
     <button data-act="tab" data-v="games"><span class="i">🎮</span>闯关游戏</button>
+    <button data-act="tab" data-v="lessons" id="lessonsTab"><span class="i">📺</span>复习课堂</button>
     <button data-act="tab" data-v="rewards"><span class="i">⭐</span>我的星星</button>
   </nav>
 </div>
@@ -268,6 +277,7 @@ function render() {
   else if (view.name === 'games') el.innerHTML = vGames();
   else if (view.name === 'play') el.innerHTML = vPlay();
   else if (view.name === 'rewards') el.innerHTML = vRewards();
+  else if (view.name === 'lessons') el.innerHTML = vLessons();
   const tab = view.name === 'detail' ? 'explore' : (view.name === 'play' ? 'games' : view.name);
   document.querySelectorAll('#tabbar button').forEach(b => b.classList.toggle('on', b.dataset.v === tab));
 }
@@ -502,6 +512,22 @@ function vRewards() {
   return h;
 }
 
+/* =============== 复习课堂（家用版才有内容；公开版此 tab 自动隐藏） =============== */
+const CN_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+const PART_ICON = {'单词': '🔤', '阅读': '📖', '语法': '✏️', '句型': '🧩'};
+function vLessons() {
+  let h = '<header class="apphead"><div class="logo">📺 复习课堂</div><div class="starchip">⭐ ' + state.stars + '</div></header>';
+  h += '<div class="hintbar">🎬 想复习哪一课？点一下，就能看老师上课的录像啦！</div>';
+  CONTENT.lessons.forEach(L => {
+    h += '<div class="lesson"><div class="ltitle">第' + (CN_NUM[L.n - 1] || L.n) + '课</div><div class="lparts">';
+    L.parts.forEach(p => {
+      h += '<a class="lpart" href="' + p[1] + '" target="_blank" rel="noopener">' + (PART_ICON[p[0]] || '🎬') + ' ' + p[0] + '</a>';
+    });
+    h += '</div></div>';
+  });
+  return h;
+}
+
 function showParent() {
   const acc = state.answered ? Math.round(state.correctN / state.answered * 100) : 0;
   const rows = Object.keys(state.wrong).map(w => [w, state.wrong[w]]).sort((a, b) => b[1] - a[1]).slice(0, 8);
@@ -562,6 +588,7 @@ function closeOverlay() {
 }
 
 /* =============== 启动 =============== */
+if (!CONTENT.lessons || !CONTENT.lessons.length) document.getElementById('lessonsTab').style.display = 'none';
 document.getElementById('splash').style.display = 'none';
 document.getElementById('app').style.display = 'block';
 render();

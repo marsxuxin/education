@@ -22,6 +22,13 @@ import numpy as np
 
 from data import LETTERS, COMBOS, CONFUSION_PAIRS, ZH_CLIPS, STICKERS
 
+# 家庭私有的课程回放链接：文件存在则额外产出"家用版"成品（dist-private/）；
+# 公开版成品（dist/）永远不含这些链接
+try:
+    from lessons_private import LESSONS
+except ImportError:
+    LESSONS = []
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(ROOT, "audio_cache")
 DIST = os.path.join(ROOT, "dist")
@@ -179,16 +186,29 @@ def main():
         "combos": COMBOS,
         "pairs": CONFUSION_PAIRS,
         "stickers": STICKERS,
+        "lessons": [],
     }
     tpl = open(os.path.join(ROOT, "template.html"), encoding="utf-8").read()
-    html = tpl.replace("__CONTENT_JSON__", json.dumps(content, ensure_ascii=False, separators=(",", ":")))
-    html = html.replace("__AUDIO_JSON__", json.dumps(audio_map, separators=(",", ":")))
-    out = os.path.join(DIST, "index.html")
-    with open(out, "w", encoding="utf-8") as f:
-        f.write(html)
 
-    print(f"\n音频原始体积 {total / 1024:.0f} KB, 成品 {os.path.getsize(out) / 1024 / 1024:.2f} MB")
-    print(f"输出: {out}")
+    def render(cont, out_path):
+        html = tpl.replace("__CONTENT_JSON__", json.dumps(cont, ensure_ascii=False, separators=(",", ":")))
+        html = html.replace("__AUDIO_JSON__", json.dumps(audio_map, separators=(",", ":")))
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(html)
+        return os.path.getsize(out_path)
+
+    out_pub = os.path.join(DIST, "index.html")
+    size = render(content, out_pub)
+    print(f"\n音频原始体积 {total / 1024:.0f} KB, 公开版成品 {size / 1024 / 1024:.2f} MB -> {out_pub}")
+    if LESSONS:
+        cont_priv = dict(content)
+        cont_priv["lessons"] = [{"n": num, "parts": [[lab, url] for lab, url in parts]}
+                                for num, parts in LESSONS]
+        out_priv = os.path.join(ROOT, "dist-private", "index.html")
+        size = render(cont_priv, out_priv)
+        n_link = sum(len(p) for _, p in LESSONS)
+        print(f"家用版成品(含 {len(LESSONS)} 课 {n_link} 条回放链接) {size / 1024 / 1024:.2f} MB -> {out_priv}")
 
 
 if __name__ == "__main__":
